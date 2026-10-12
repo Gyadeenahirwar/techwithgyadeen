@@ -1,0 +1,512 @@
+// TechWithGyadeen Prisma Schema
+// Database: PostgreSQL (designed for Google Cloud SQL, Supabase, Neon or self-hosted PostgreSQL)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  INSTRUCTOR
+  USER
+}
+
+enum CourseStatus {
+  DRAFT
+  UPCOMING
+  PUBLISHED
+  COMPLETED
+  ARCHIVED
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum DifficultyLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  ALL_LEVELS
+}
+
+enum ResourceType {
+  CHEAT_SHEET
+  INTERVIEW_QUESTIONS
+  CODE_PROJECT
+  PDF_GUIDE
+  TEMPLATE
+  PRACTICE_SET
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String?
+  role          Role      @default(USER)
+  image         String?
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  profile         Profile?
+  enrollments     Enrollment[]
+  lessonProgress  LessonProgress[]
+  orders          Order[]
+  certificates    Certificate[]
+  reviews         Review[]
+  bookmarks       Bookmark[]
+  notifications   Notification[]
+  downloadLogs    ResourceDownload[]
+  coursesTeaching Course[]           @relation("InstructorCourses")
+  blogPosts       BlogPost[]         @relation("AuthorBlogPosts")
+
+  @@index([email])
+  @@index([role])
+}
+
+model Profile {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  headline   String?
+  bio        String?
+  linkedin   String?
+  github     String?
+  website    String?
+  twitter    String?
+  company    String?
+  location   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model CourseCategory {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  courses     Course[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+}
+
+model Technology {
+  id          String             @id @default(uuid())
+  name        String             @unique
+  slug        String             @unique
+  icon        String?
+  description String?
+  color       String?            // Brand accent hex code
+  courses     CourseTechnology[]
+  projects    ProjectTechnology[]
+  updates     TechnologyUpdate[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([slug])
+}
+
+model Course {
+  id              String             @id @default(uuid())
+  title           String
+  slug            String             @unique
+  subtitle        String?
+  description     String
+  thumbnail       String?
+  videoPreviewUrl String?
+  instructorId    String
+  instructor      User               @relation("InstructorCourses", fields: [instructorId], references: [id])
+  categoryId      String?
+  category        CourseCategory?    @relation(fields: [categoryId], references: [id])
+  level           DifficultyLevel    @default(BEGINNER)
+  status          CourseStatus       @default(DRAFT)
+  isFree          Boolean            @default(false)
+  price           Float              @default(0.0)
+  discountPrice   Float?
+  currency        String             @default("INR")
+  paymentRequired Boolean            @default(false)
+  durationHours   Float              @default(0.0)
+  requirements    String[]           @default([])
+  learningOutcomes String[]          @default([])
+  faqs            Json?
+  rating          Float              @default(5.0)
+  studentsCount   Int                @default(0)
+  isFeatured      Boolean            @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  deletedAt       DateTime?
+
+  technologies CourseTechnology[]
+  lessons      Lesson[]
+  enrollments  Enrollment[]
+  orders       Order[]
+  reviews      Review[]
+  certificates Certificate[]
+  courseTags   CourseTag[]
+
+  @@index([slug])
+  @@index([status])
+  @@index([isFree])
+}
+
+model CourseTechnology {
+  courseId     String
+  course       Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  technologyId String
+  technology   Technology @relation(fields: [technologyId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, technologyId])
+}
+
+model Lesson {
+  id           String           @id @default(uuid())
+  courseId     String
+  course       Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title        String
+  slug         String
+  description  String?
+  orderIndex   Int              @default(0)
+  durationMin  Int              @default(10)
+  videoUrl     String?
+  content      String?
+  attachments  Json?
+  isFreePreview Boolean         @default(false)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  progress     LessonProgress[]
+
+  @@unique([courseId, slug])
+  @@index([courseId, orderIndex])
+}
+
+model LessonProgress {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    String
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+  lastPositionSec Int  @default(0)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+}
+
+model Enrollment {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progressPct Float     @default(0.0)
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  orderNumber     String      @unique
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  courseId        String
+  course          Course      @relation(fields: [courseId], references: [id])
+  amount          Float
+  currency        String      @default("INR")
+  status          OrderStatus @default(PENDING)
+  razorpayOrderId String?     @unique
+  payment         Payment?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Payment {
+  id                String        @id @default(uuid())
+  orderId           String        @unique
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount            Float
+  currency          String        @default("INR")
+  status            PaymentStatus @default(PENDING)
+  razorpayPaymentId String?       @unique
+  razorpaySignature String?
+  paymentMethod     String?
+  gatewayResponse   Json?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([status])
+}
+
+model BlogCategory {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  slug        String     @unique
+  description String?
+  posts       BlogPost[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([slug])
+}
+
+model BlogPost {
+  id           String        @id @default(uuid())
+  title        String
+  slug         String        @unique
+  excerpt      String
+  content      String
+  coverImage   String?
+  authorId     String
+  author       User          @relation("AuthorBlogPosts", fields: [authorId], references: [id])
+  categoryId   String?
+  category     BlogCategory? @relation(fields: [categoryId], references: [id])
+  status       ContentStatus @default(DRAFT)
+  readTimeMin  Int           @default(5)
+  viewsCount   Int           @default(0)
+  isFeatured   Boolean       @default(false)
+  publishedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+
+  blogTags     BlogTag[]
+
+  @@index([slug])
+  @@index([status])
+}
+
+model TechnologyUpdate {
+  id           String        @id @default(uuid())
+  title        String
+  slug         String        @unique
+  summary      String
+  content      String
+  technologyId String
+  technology   Technology    @relation(fields: [technologyId], references: [id])
+  status       ContentStatus @default(PUBLISHED)
+  coverImage   String?
+  sourceUrl    String?
+  authorName   String        @default("Gyadeen")
+  tags         String[]      @default([])
+  publishedAt  DateTime      @default(now())
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([slug])
+  @@index([technologyId])
+}
+
+model Resource {
+  id            String             @id @default(uuid())
+  title         String
+  slug          String             @unique
+  description   String
+  type          ResourceType
+  category      String
+  isFree        Boolean            @default(true)
+  price         Float              @default(0.0)
+  downloadUrl   String?
+  fileSizeBytes BigInt?
+  format        String?
+  downloadsCount Int               @default(0)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  downloads     ResourceDownload[]
+
+  @@index([slug])
+  @@index([category])
+}
+
+model ResourceDownload {
+  id         String   @id @default(uuid())
+  resourceId String
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  ipAddress  String?
+  downloadedAt DateTime @default(now())
+
+  @@index([resourceId])
+}
+
+model Project {
+  id              String              @id @default(uuid())
+  title           String
+  slug            String              @unique
+  shortDesc       String
+  problem         String
+  solution        String
+  architecture    String
+  features        String[]            @default([])
+  learningOutcomes String[]           @default([])
+  githubUrl       String?
+  liveDemoUrl     String?
+  screenshots     String[]            @default([])
+  featured        Boolean             @default(false)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  technologies    ProjectTechnology[]
+
+  @@index([slug])
+}
+
+model ProjectTechnology {
+  projectId    String
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  technologyId String
+  technology   Technology @relation(fields: [technologyId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, technologyId])
+}
+
+model Bookmark {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemType   String   // COURSE, BLOG, RESOURCE, PROJECT
+  itemId     String
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, itemType, itemId])
+  @@index([userId])
+}
+
+model NewsletterSubscriber {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  name       String?
+  isActive   Boolean  @default(true)
+  source     String   @default("homepage")
+  subscribedAt DateTime @default(now())
+  unsubscribedAt DateTime?
+
+  @@index([email])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   // COURSE_LAUNCH, PAYMENT, UPDATE, SYSTEM
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Certificate {
+  id            String   @id @default(uuid())
+  certificateNo String   @unique
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id])
+  issuedAt      DateTime @default(now())
+  verificationUrl String?
+
+  @@index([certificateNo])
+  @@index([userId])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating    Int      @default(5)
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([courseId, userId])
+}
+
+model Tag {
+  id         String      @id @default(uuid())
+  name       String      @unique
+  slug       String      @unique
+  blogTags   BlogTag[]
+  courseTags CourseTag[]
+
+  @@index([slug])
+}
+
+model CourseTag {
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  tagId    String
+  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, tagId])
+}
+
+model BlogTag {
+  blogPostId String
+  blogPost   BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  tagId      String
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([blogPostId, tagId])
+}
+
+model MediaFile {
+  id          String   @id @default(uuid())
+  filename    String
+  fileUrl     String
+  fileType    String
+  fileSize    BigInt
+  provider    String   @default("LOCAL") // LOCAL, GCS, ONEDRIVE
+  storageKey  String
+  uploadedBy  String?
+  createdAt   DateTime @default(now())
+
+  @@index([provider])
+}
