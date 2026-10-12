@@ -57,7 +57,7 @@ export function CommunitySection() {
               </a>
 
               <a
-                href="https://github.com/gyadeen"
+                href="https://github.com/Gyadeenahirwar"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-semibold text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all"

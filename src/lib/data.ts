@@ -8,7 +8,7 @@ export const GYADEEN: Instructor = {
   bio: "Senior Salesforce Developer and AI Automation specialist with deep expertise across Apex, LWC, Agentforce, Data Cloud, and Enterprise Integrations. Passionate about empowering engineers and career pivoters with actionable, industry-grade architectures.",
   linkedin: "https://www.linkedin.com/in/gyadeen-ahirwar-282b2b223/",
   email: "gyadeenahirwar563@gmail.com",
-  github: "https://github.com/gyadeen",
+  github: "https://github.com/Gyadeenahirwar",
 };
 
 export const COURSES: Course[] = [
@@ -752,7 +752,7 @@ export const PROJECTS: ProjectItem[] = [
       "Build interactive SLDS-compliant LWC components",
     ],
     difficulty: "INTERMEDIATE",
-    githubUrl: "https://github.com/gyadeen/salesforce-gym-management",
+    githubUrl: "https://github.com/Gyadeenahirwar/salesforce-gym-management",
   },
   {
     id: "p-02",
@@ -775,7 +775,7 @@ export const PROJECTS: ProjectItem[] = [
       "Ground LLM agents on real-time external data sources",
     ],
     difficulty: "ADVANCED",
-    githubUrl: "https://github.com/gyadeen/agentforce-customer-assistant",
+    githubUrl: "https://github.com/Gyadeenahirwar/agentforce-customer-assistant",
   },
   {
     id: "p-03",
@@ -798,6 +798,6 @@ export const PROJECTS: ProjectItem[] = [
       "Handle Slack interactive payload webhooks securely",
     ],
     difficulty: "ADVANCED",
-    githubUrl: "https://github.com/gyadeen/salesforce-slack-event-hub",
+    githubUrl: "https://github.com/Gyadeenahirwar/salesforce-slack-event-hub",
   },
 ];

@@ -50,7 +50,7 @@ export function Footer() {
                 <LinkedinIcon className="w-4 h-4" />
               </a>
               <a
-                href="https://github.com/gyadeen"
+                href="https://github.com/Gyadeenahirwar"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all duration-200"

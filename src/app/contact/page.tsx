@@ -102,12 +102,12 @@ export default function ContactPage() {
                   <div>
                     <p className="text-slate-400">Open Source Repositories</p>
                     <a
-                      href="https://github.com/gyadeen"
+                      href="https://github.com/Gyadeenahirwar"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="font-semibold text-sky-400 hover:underline"
                     >
-                      github.com/gyadeen
+                      github.com/Gyadeenahirwar
                     </a>
                   </div>
                 </div>
